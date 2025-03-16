@@ -5,16 +5,31 @@ services:
     image: redis:7.4
     container_name: redis_server
     restart: always
+
+    # Resource constraints recognized in classic Docker Compose:
+    mem_limit: ${MEMORY_LIMIT}
+    mem_reservation: ${MEMORY_RESERVATION}
+    memswap_limit: ${SWAP_LIMIT}
+
+    # Resource constraints recognized in Docker Swarm:
+    deploy:
+      resources:
+        limits:
+          memory: ${MEMORY_LIMIT}
+        reservations:
+          memory: ${MEMORY_RESERVATION}
+
     networks:
       - redis_network
     ports:
       - "${REDIS_PORT}:6379"
     volumes:
+      - ./config/redis.conf:/usr/local/etc/redis/redis.conf
       - redis_data:/data
     environment:
       - REDIS_PASSWORD=${REDIS_PASSWORD}
     command: >
-      redis-server --requirepass ${REDIS_PASSWORD}
+      redis-server /usr/local/etc/redis/redis.conf --requirepass ${REDIS_PASSWORD}
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 30s
